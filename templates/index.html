@@ -196,12 +196,40 @@
 
         <div class="button-container">
             <button id="testBtn" onclick="startTest()">Iniciar Teste</button>
+            <button id="healthBtn" onclick="checkHealth()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); margin-left: 10px;">Verificar Conexão</button>
         </div>
 
         <div class="timestamp" id="timestamp"></div>
     </div>
 
     <script>
+        async function checkHealth() {
+            const error = document.getElementById('error');
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                
+                if (data.internet) {
+                    error.textContent = '✅ Conexão com internet OK! Você pode começar o teste.';
+                    error.style.background = '#efe';
+                    error.style.color = '#3c3';
+                    error.style.borderLeft = '4px solid #3c3';
+                } else {
+                    error.textContent = '❌ Sem conexão com a internet. Verifique sua conexão.';
+                    error.style.background = '#fee';
+                    error.style.color = '#c33';
+                    error.style.borderLeft = '4px solid #c33';
+                }
+                error.style.display = 'block';
+            } catch (err) {
+                error.textContent = 'Erro ao verificar conexão: ' + err.message;
+                error.style.background = '#fee';
+                error.style.color = '#c33';
+                error.style.borderLeft = '4px solid #c33';
+                error.style.display = 'block';
+            }
+        }
+
         async function startTest() {
             const btn = document.getElementById('testBtn');
             const loading = document.getElementById('loading');
@@ -216,20 +244,30 @@
             results.style.opacity = '0.5';
 
             try {
-                const response = await fetch('/test');
-                if (!response.ok) {
-                    throw new Error('Erro ao realizar o teste');
-                }
-
+                const response = await fetch('/test', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
                 const data = await response.json();
                 
+                if (!response.ok) {
+                    throw new Error(data.error || 'Erro ao realizar o teste');
+                }
+
                 document.getElementById('download').textContent = data.download;
                 document.getElementById('upload').textContent = data.upload;
                 timestamp.textContent = `Testado em: ${data.timestamp}`;
 
                 results.style.opacity = '1';
             } catch (err) {
-                error.textContent = 'Erro ao realizar o teste de velocidade. Por favor, tente novamente.';
+                console.error('Erro:', err);
+                error.textContent = err.message || 'Erro ao realizar o teste de velocidade. Por favor, tente novamente.';
+                error.style.background = '#fee';
+                error.style.color = '#c33';
+                error.style.borderLeft = '4px solid #c33';
                 error.style.display = 'block';
                 results.style.opacity = '1';
             } finally {

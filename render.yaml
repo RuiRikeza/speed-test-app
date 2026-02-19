@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: speed-test-app
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --workers 2 --timeout 600 --bind 0.0.0.0:$PORT main:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: "False"
+      - key: PYTHONUNBUFFERED
+        value: "1"
